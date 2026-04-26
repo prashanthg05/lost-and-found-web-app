@@ -2,12 +2,13 @@ import { ReportForm } from "@/components/report-form";
 import { Suspense } from "react";
 
 // Need to wrap in Suspense because we might read searchParams on client side
-export default function ReportPage({
+export default async function ReportPage({
   searchParams,
 }: {
-  searchParams: { type?: string };
+  searchParams: Promise<{ type?: string }>;
 }) {
-  const initialType = searchParams.type === "found" ? "found" : "lost";
+  const resolvedSearchParams = await searchParams;
+  const initialType = resolvedSearchParams.type === "found" ? "found" : "lost";
 
   return (
     <div className="max-w-4xl mx-auto py-8">

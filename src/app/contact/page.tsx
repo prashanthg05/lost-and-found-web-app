@@ -7,20 +7,35 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate sending an email
-    setTimeout(() => {
-      setIsSubmitting(false);
+    const formData = new FormData(e.currentTarget);
+    const name = formData.get("name") as string;
+    const email = formData.get("email") as string;
+    const message = formData.get("message") as string;
+
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([{ name, email, message }]);
+
+      if (error) throw error;
+      
       setIsSuccess(true);
-    }, 1500);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to send message. Have you created the contact_messages table?");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isSuccess) {
@@ -59,15 +74,15 @@ export default function ContactPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" required placeholder="Your name" />
+              <Input id="name" name="name" required placeholder="Your name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" required placeholder="your.email@example.com" />
+              <Input id="email" name="email" type="email" required placeholder="your.email@example.com" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="message">Message</Label>
-              <Textarea id="message" required placeholder="How can we help?" className="min-h-[120px]" />
+              <Textarea id="message" name="message" required placeholder="How can we help?" className="min-h-[120px]" />
             </div>
             <Button type="submit" className="w-full" disabled={isSubmitting}>
               {isSubmitting ? (

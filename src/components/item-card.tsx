@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -24,6 +24,18 @@ type Item = {
 export function ItemCard({ item }: { item: Item }) {
   const [isClaimed, setIsClaimed] = useState(item.status === 'claimed');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  const images = item.image_url ? item.image_url.split(',') : [];
+
+  useEffect(() => {
+    if (images.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [images.length]);
 
   const handleClaim = async () => {
     try {
@@ -51,9 +63,27 @@ export function ItemCard({ item }: { item: Item }) {
 
   return (
     <Card className={`overflow-hidden flex flex-col ${isClaimed ? 'opacity-70 grayscale-[50%]' : ''}`}>
-      {item.image_url ? (
-        <div className="w-full h-48 bg-muted relative">
-          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+      {images.length > 0 ? (
+        <div className="w-full h-48 bg-muted relative overflow-hidden group">
+          {images.map((imgUrl, index) => (
+            <img 
+              key={index}
+              src={imgUrl} 
+              alt={`${item.name} - Image ${index + 1}`} 
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${index === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`} 
+            />
+          ))}
+          
+          {images.length > 1 && (
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-20">
+              {images.map((_, index) => (
+                <div 
+                  key={index} 
+                  className={`h-1.5 rounded-full transition-all duration-300 ${index === currentImageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+                />
+              ))}
+            </div>
+          )}
           {isClaimed && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <span className="text-white font-bold text-xl uppercase tracking-widest bg-black/60 px-4 py-2 rounded">
